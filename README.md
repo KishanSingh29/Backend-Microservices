@@ -8,25 +8,32 @@ An AI-powered automatic expense tracking system built with Spring Boot Microserv
 
 ## 🏗️ Architecture
 
-
-React Native App (Frontend)
-↓
-┌─────────────┐     ┌─────────────┐
-│ AuthService │────▶│ UserService │
-│  Port: 9898 │     │  Port: 9810 │
-└─────────────┘     └─────────────┘
-↓ Kafka (user_service topic)
-┌──────────────────┐
-│ DataScience Svc  │  ← Mistral AI + Flask
-│   Port: 8000     │  ← Parses SMS/notifications
-└──────────────────┘
-↓ Kafka (expense topic)
-┌─────────────────┐
-│ ExpenseService  │
-│   Port: 9820    │
-└─────────────────┘
-↓
-MySQL DB
+```
+React Native App
+        |
+        ▼
++---------------+        +---------------+
+|  AuthService  |------->|  UserService  |
+|   Port: 9898  |        |   Port: 9810  |
++---------------+        +---------------+
+        |
+        | Kafka (user_service topic)
+        ▼
++----------------------+
+|  DataScience Service |  <- Mistral AI + Flask
+|     Port: 8000       |  <- Parses SMS
++----------------------+
+        |
+        | Kafka (expense topic)
+        ▼
++---------------+
+| ExpenseService|
+|  Port: 9820   |
++---------------+
+        |
+        ▼
+    MySQL DB
+```
 
 
 
