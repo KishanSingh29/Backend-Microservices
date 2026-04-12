@@ -151,13 +151,13 @@ cd dsservice && pip install -r requirements.txt && python app.py
 
 ## 🔄 How It Works
 
-1- User receives payment SMS on phone
-2- React Native app captures SMS in background
-3- SMS sent to DataScience Service
-4- Mistral AI extracts: amount, merchant, category, date
-5- Parsed data sent via Kafka to ExpenseService
-6- Expense saved in MySQL database
-7- React Native app shows updated expense list
+1. User receives payment SMS on phone
+2. React Native app captures SMS in background
+3. SMS sent to DataScience Service
+4. Mistral AI extracts: amount, merchant, category, date
+5. Parsed data sent via Kafka to ExpenseService
+6. Expense saved in MySQL database
+7. React Native app shows updated expense list
 
 
 ---
