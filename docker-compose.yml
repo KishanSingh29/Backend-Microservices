@@ -1,0 +1,78 @@
+version: '3.9'
+
+services:
+
+  # ================= MySQL =================
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: kishan
+      MYSQL_DATABASE: authservice
+    ports:
+      - "3306:3306"
+    networks:
+      - expence-network
+    command: --default-authentication-plugin=mysql_native_password
+
+  # ================= Zookeeper =================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - expence-network
+
+  # ================= Kafka =================
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+    networks:
+      - expence-network
+
+  # ================= AuthService =================
+  authservice:
+    build:
+      context: ./authservice
+      dockerfile: Dockerfile
+    container_name: authservice
+    depends_on:
+      - mysql
+      - kafka
+    ports:
+      - "9898:9898"
+    networks:
+      - expence-network
+
+  # ================= Userservice =================
+  userservice:
+    build:
+      context: ./userservice
+      dockerfile: Dockerfile
+    container_name: userservice
+    depends_on:
+      - mysql
+      - kafka
+    ports:
+      - "9810:9810"
+    networks:
+      - expence-network
+
+networks:
+  expence-network:
+    driver: bridge
