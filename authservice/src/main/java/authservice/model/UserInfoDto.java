@@ -21,3 +21,6 @@ public class UserInfoDto {
     private String email;
     private String profilePic;
 }
+
+
+// this class dto  is for sign flow dto

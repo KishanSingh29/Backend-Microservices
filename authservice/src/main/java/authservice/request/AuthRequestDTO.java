@@ -14,3 +14,5 @@ public class AuthRequestDTO {
     private String username;
     private String password;
 }
+
+//this class dto is for login flow;

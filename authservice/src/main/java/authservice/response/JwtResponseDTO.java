@@ -15,3 +15,6 @@ public class JwtResponseDTO {
     private String token;
     private String userId;
 }
+
+
+//this is class dto is for backned to client data client ko data bhej ne ke liye

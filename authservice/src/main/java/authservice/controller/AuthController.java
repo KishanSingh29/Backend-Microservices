@@ -48,7 +48,7 @@ public class AuthController
             return new ResponseEntity<>("Exception in User Service", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
+    //understand ping again
     @GetMapping("/auth/v1/ping")
     public ResponseEntity<String> ping() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

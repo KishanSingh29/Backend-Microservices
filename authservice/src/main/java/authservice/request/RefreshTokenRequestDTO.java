@@ -19,3 +19,5 @@ import lombok.NoArgsConstructor;
 public class RefreshTokenRequestDTO {
     private String token;
 }
+
+//this class dto is for login flow for store accesstoken in frontend
