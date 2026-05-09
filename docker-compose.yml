@@ -37,7 +37,7 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     ports:
@@ -54,12 +54,17 @@ services:
     depends_on:
       - mysql
       - kafka
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/authservice
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: kishan
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     ports:
       - "9898:9898"
     networks:
       - expence-network
 
-  # ================= Userservice =================
+  # ================= UserService =================
   userservice:
     build:
       context: ./userservice
@@ -68,8 +73,48 @@ services:
     depends_on:
       - mysql
       - kafka
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/userservice
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: kishan
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     ports:
       - "9810:9810"
+    networks:
+      - expence-network
+
+  # ================= ExpenseService =================
+  expenseservice:
+    build:
+      context: ./expenseservice
+      dockerfile: Dockerfile
+    container_name: expenseservice
+    depends_on:
+      - mysql
+      - kafka
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/expenseservice
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: kishan
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    ports:
+      - "9820:9820"
+    networks:
+      - expence-network
+
+  # ================= DataScience Service =================
+  dsservice:
+    build:
+      context: ./dsservice
+      dockerfile: Dockerfile
+    container_name: dsservice
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_HOST: kafka
+      KAFKA_PORT: 9092
+    ports:
+      - "8000:8000"
     networks:
       - expence-network
 

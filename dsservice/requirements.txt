@@ -1,0 +1,5 @@
+flask
+langchain
+langchain-mistralai
+kafka-python
+python-dotenv
