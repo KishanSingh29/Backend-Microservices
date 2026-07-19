@@ -15,7 +15,9 @@ class LLMService:
                 "You are an expert extraction algorithm. "
                 "Only extract relevant information from the text. "
                 "If you do not know the value of an attribute asked to extract, "
-                "return null for the attribute's value.",
+                "return null for the attribute's value. "
+                "For transaction_type, return 'debit' if money was spent, paid, withdrawn or debited, "
+                "and 'credit' if money was received, deposited or credited to the account.",
             ),
             ("human", "{text}")
         ])

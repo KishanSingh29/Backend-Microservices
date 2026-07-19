@@ -1,5 +1,8 @@
 flask
+flask-cors
 langchain
 langchain-mistralai
+langchain-openai
 kafka-python
 python-dotenv
+jsonpickle

@@ -27,6 +27,7 @@ public class ExpenseDto {
     private String userId;
     private String merchant;
     private String currency;
+    private String transactionType;
     private Timestamp createdAt;
 
     // ✅ Constructor mein bhi fix karo
@@ -40,6 +41,7 @@ public class ExpenseDto {
             this.userId = expense.userId;
             this.merchant = expense.merchant;
             this.currency = expense.currency;
+            this.transactionType = expense.transactionType;
             this.createdAt = expense.createdAt;
         } catch (Exception e) {
             throw new RuntimeException("Failed to deserialize ExpenseDto from JSON", e);

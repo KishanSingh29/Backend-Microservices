@@ -52,6 +52,9 @@ public class Expense
     @Column(name = "currency")
     private String currency;
 
+    @Column(name = "transaction_type")
+    private String transactionType;
+
     @JsonProperty(value = "created_at")
     private Timestamp createdAt;
 

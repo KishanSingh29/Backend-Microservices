@@ -1,8 +1,6 @@
-version: '3.9'
+version: "3.9"
 
 services:
-
-  # ================= MySQL =================
   mysql:
     image: mysql:8.0
     container_name: mysql
@@ -15,8 +13,13 @@ services:
     networks:
       - expence-network
     command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pkishan"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
-  # ================= Zookeeper =================
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     container_name: zookeeper
@@ -28,7 +31,6 @@ services:
     networks:
       - expence-network
 
-  # ================= Kafka =================
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     container_name: kafka
@@ -37,44 +39,57 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     ports:
+      - "29092:29092"
       - "9092:9092"
     networks:
       - expence-network
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
 
-  # ================= AuthService =================
   authservice:
     build:
       context: ./authservice
       dockerfile: Dockerfile
     container_name: authservice
+    restart: on-failure
     depends_on:
-      - mysql
-      - kafka
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/authservice
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/authservice?useSSL=false&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: kishan
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_KAFKA_PRODUCER_PROPERTIES_SPRING_JSON_ADD_TYPE_HEADERS: false
     ports:
       - "9898:9898"
     networks:
       - expence-network
 
-  # ================= UserService =================
   userservice:
     build:
       context: ./userservice
       dockerfile: Dockerfile
     container_name: userservice
+    restart: on-failure
     depends_on:
-      - mysql
-      - kafka
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/userservice
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/userservice?useSSL=false&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: kishan
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
@@ -83,17 +98,19 @@ services:
     networks:
       - expence-network
 
-  # ================= ExpenseService =================
   expenseservice:
     build:
       context: ./expenseservice
       dockerfile: Dockerfile
     container_name: expenseservice
+    restart: on-failure
     depends_on:
-      - mysql
-      - kafka
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/expenseservice
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/expenseservice?useSSL=false&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: kishan
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
@@ -102,14 +119,17 @@ services:
     networks:
       - expence-network
 
-  # ================= DataScience Service =================
   dsservice:
     build:
       context: ./dsservice
       dockerfile: Dockerfile
     container_name: dsservice
+    restart: on-failure
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
+    env_file:
+      - ./dsservice/.env
     environment:
       KAFKA_HOST: kafka
       KAFKA_PORT: 9092

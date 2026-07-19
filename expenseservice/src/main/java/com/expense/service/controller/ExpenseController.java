@@ -1,6 +1,9 @@
 package com.expense.service.controller;
 
+import com.expense.service.dto.AddExpenseResponse;
 import com.expense.service.dto.ExpenseDto;
+import com.expense.service.dto.SpendingLimitDto;
+import com.expense.service.dto.SpendingLimitStatusDto;
 import com.expense.service.service.ExpenseService;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,15 +36,37 @@ public class ExpenseController {
     }
 
     @PostMapping("/addExpense")
-    public ResponseEntity<Boolean> addExpenses(
+    public ResponseEntity<AddExpenseResponse> addExpenses(
             @RequestHeader(value = "X-User-Id") @NonNull String userId,
             @RequestBody ExpenseDto expenseDto) {
         try {
             expenseDto.setUserId(userId);
             return ResponseEntity.ok(expenseService.createExpense(expenseDto));
         } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(false);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(AddExpenseResponse.builder().success(false).build());
         }
+    }
+
+    @PostMapping("/setLimit")
+    public ResponseEntity<SpendingLimitStatusDto> setLimit(
+            @RequestHeader(value = "X-User-Id") @NonNull String userId,
+            @RequestBody SpendingLimitDto spendingLimitDto) {
+        try {
+            spendingLimitDto.setUserId(userId);
+            return ResponseEntity.ok(expenseService.setLimit(spendingLimitDto));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(SpendingLimitStatusDto.builder().success(false).build());
+        }
+    }
+
+    @GetMapping("/getLimit")
+    public ResponseEntity<SpendingLimitStatusDto> getLimit(
+            @RequestHeader(value = "X-User-Id") @NonNull String userId) {
+        return expenseService.getLimit(userId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
     @GetMapping("/health")
