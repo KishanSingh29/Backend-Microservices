@@ -1,7 +1,6 @@
 package com.expense.service.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.AllArgsConstructor;
@@ -11,7 +10,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -20,15 +18,8 @@ import java.time.LocalDate;
 @Setter
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class SpendingLimitStatusDto {
+public class CategoryBreakdownDto {
 
-    private Boolean success;
-    private BigDecimal amount;
-    private Integer days;
-    private LocalDate startDate;
-    private LocalDate endDate;
-    private BigDecimal totalSpent;
-    private BigDecimal remainingLimit;
-    private Long daysLeft;
+    private String category;
+    private BigDecimal totalAmount;
 }

@@ -19,5 +19,6 @@ import java.math.BigDecimal;
 public class SpendingLimitDto {
 
     private String userId;
-    private BigDecimal monthlyLimit;
+    private BigDecimal amount;
+    private Integer days;
 }

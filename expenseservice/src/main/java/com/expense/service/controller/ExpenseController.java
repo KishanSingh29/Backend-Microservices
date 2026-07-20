@@ -2,6 +2,7 @@ package com.expense.service.controller;
 
 import com.expense.service.dto.AddExpenseResponse;
 import com.expense.service.dto.ExpenseDto;
+import com.expense.service.dto.ExpenseSummaryDto;
 import com.expense.service.dto.SpendingLimitDto;
 import com.expense.service.dto.SpendingLimitStatusDto;
 import com.expense.service.service.ExpenseService;
@@ -67,6 +68,16 @@ public class ExpenseController {
         return expenseService.getLimit(userId)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<ExpenseSummaryDto> getSummary(
+            @RequestHeader(value = "X-User-Id") @NonNull String userId) {
+        try {
+            return ResponseEntity.ok(expenseService.getSummary(userId));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @GetMapping("/health")

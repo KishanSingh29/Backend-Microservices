@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "spending_limit")
@@ -34,6 +35,15 @@ public class SpendingLimit {
     @Column(name = "user_id", unique = true, nullable = false)
     private String userId;
 
-    @Column(name = "monthly_limit")
-    private BigDecimal monthlyLimit;
+    @Column(name = "amount")
+    private BigDecimal amount;
+
+    @Column(name = "days")
+    private Integer days;
+
+    @Column(name = "start_date")
+    private LocalDate startDate;
+
+    @Column(name = "end_date")
+    private LocalDate endDate;
 }
