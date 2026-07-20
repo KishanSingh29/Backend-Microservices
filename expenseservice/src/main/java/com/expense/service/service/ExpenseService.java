@@ -174,8 +174,13 @@ public class ExpenseService
         return objectMapper.convertValue(expenseOpt, new TypeReference<List<ExpenseDto>>() {});
     }
 
-    public ExpenseSummaryDto getSummary(String userId){
-        List<Expense> expenses = expenseRepository.findByUserIdOrderByCreatedAtDesc(userId);
+    public ExpenseSummaryDto getSummary(String userId, int days){
+        LocalDate startDate = LocalDate.now().minusDays(days);
+        Timestamp rangeStart = Timestamp.valueOf(startDate.atStartOfDay());
+
+        List<Expense> expenses = expenseRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
+                .filter(expense -> expense.getCreatedAt() != null && !expense.getCreatedAt().before(rangeStart))
+                .collect(Collectors.toList());
 
         BigDecimal totalIncome = expenses.stream()
                 .filter(expense -> "credit".equalsIgnoreCase(expense.getTransactionType()))
@@ -184,7 +189,7 @@ public class ExpenseService
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal totalExpense = expenses.stream()
-                .filter(expense -> !"credit".equalsIgnoreCase(expense.getTransactionType()))
+                .filter(expense -> "debit".equalsIgnoreCase(expense.getTransactionType()))
                 .map(Expense::getAmount)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -206,7 +211,7 @@ public class ExpenseService
                 .savings(totalIncome.subtract(totalExpense))
                 .recentTransactions(recentTransactions)
                 .categoryBreakdown(buildCategoryBreakdown(expenses))
-                .monthlyData(buildMonthlyData(expenses))
+                .monthlyData(buildMonthlyData(expenses, days))
                 .build();
     }
 
@@ -226,10 +231,11 @@ public class ExpenseService
                 .collect(Collectors.toList());
     }
 
-    private List<MonthlyDataDto> buildMonthlyData(List<Expense> expenses){
+    private List<MonthlyDataDto> buildMonthlyData(List<Expense> expenses, int days){
+        int monthsToShow = Math.max(1, (int) Math.ceil(days / 30.0));
         Map<YearMonth, BigDecimal[]> monthTotals = new LinkedHashMap<>();
         YearMonth currentMonth = YearMonth.now();
-        for (int i = 5; i >= 0; i--) {
+        for (int i = monthsToShow - 1; i >= 0; i--) {
             monthTotals.put(currentMonth.minusMonths(i), new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO});
         }
 

@@ -72,9 +72,10 @@ public class ExpenseController {
 
     @GetMapping("/summary")
     public ResponseEntity<ExpenseSummaryDto> getSummary(
-            @RequestHeader(value = "X-User-Id") @NonNull String userId) {
+            @RequestHeader(value = "X-User-Id") @NonNull String userId,
+            @RequestParam(defaultValue = "180") int days) {
         try {
-            return ResponseEntity.ok(expenseService.getSummary(userId));
+            return ResponseEntity.ok(expenseService.getSummary(userId, days));
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }

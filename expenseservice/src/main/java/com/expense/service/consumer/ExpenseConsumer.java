@@ -22,6 +22,7 @@ public class ExpenseConsumer
     @KafkaListener(topics = "${spring.kafka.topic-json.name}", groupId = "${spring.kafka.consumer.group-id}")
     public void listen(ExpenseDto eventData) {
         try{
+            System.out.println("Kafka received: " + eventData);
             // Todo: Make it transactional, and check if duplicate event (Handle idempotency)
             expenseService.createExpense(eventData);
         }catch(Exception ex){

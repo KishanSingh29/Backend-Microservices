@@ -15,6 +15,7 @@ import java.sql.Timestamp;
 @Builder
 @Getter
 @Setter
+@ToString
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class) // ✅ SnakeCaseStrategy
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ExpenseDto {
@@ -24,9 +25,11 @@ public class ExpenseDto {
     @NonNull
     private BigDecimal amount;
 
+    @JsonProperty("user_id")
     private String userId;
     private String merchant;
     private String currency;
+    @JsonProperty("transaction_type")
     private String transactionType;
     private Timestamp createdAt;
 
