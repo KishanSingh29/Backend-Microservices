@@ -1,0 +1,14 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "expense-tracker-web",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "cd /d C:\\Users\\91620\\Desktop\\expense-tracker-app && npx expo start --web"
+      ],
+      "port": 8081
+    }
+  ]
+}

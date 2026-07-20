@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.YearMonth;
@@ -67,7 +68,7 @@ public class ExpenseService
 
         SpendingLimit spendingLimit = limitOpt.get();
         BigDecimal amount = spendingLimit.getAmount();
-        BigDecimal totalSpent = getSpendInRange(expenseDto.getUserId(), spendingLimit.getStartDate(), spendingLimit.getEndDate());
+        BigDecimal totalSpent = getSpendInRange(spendingLimit);
         BigDecimal remainingLimit = amount.subtract(totalSpent);
         boolean limitExceeded = totalSpent.compareTo(amount) > 0;
 
@@ -83,6 +84,12 @@ public class ExpenseService
 
     public SpendingLimitStatusDto setLimit(SpendingLimitDto spendingLimitDto){
         try{
+            if (spendingLimitDto.getAmount() != null && spendingLimitDto.getAmount().compareTo(BigDecimal.ZERO) == 0) {
+                spendingLimitRepository.findByUserId(spendingLimitDto.getUserId())
+                        .ifPresent(spendingLimitRepository::delete);
+                return SpendingLimitStatusDto.builder().success(true).build();
+            }
+
             SpendingLimit spendingLimit = spendingLimitRepository.findByUserId(spendingLimitDto.getUserId())
                     .orElseGet(SpendingLimit::new);
             LocalDate startDate = LocalDate.now();
@@ -93,6 +100,7 @@ public class ExpenseService
             spendingLimit.setDays(spendingLimitDto.getDays());
             spendingLimit.setStartDate(startDate);
             spendingLimit.setEndDate(endDate);
+            spendingLimit.setCreatedAt(Instant.now());
             spendingLimitRepository.save(spendingLimit);
 
             return buildStatus(spendingLimit, true);
@@ -107,7 +115,7 @@ public class ExpenseService
     }
 
     private SpendingLimitStatusDto buildStatus(SpendingLimit spendingLimit, Boolean success){
-        BigDecimal totalSpent = getSpendInRange(spendingLimit.getUserId(), spendingLimit.getStartDate(), spendingLimit.getEndDate());
+        BigDecimal totalSpent = getSpendInRange(spendingLimit);
         BigDecimal remainingLimit = spendingLimit.getAmount() != null
                 ? spendingLimit.getAmount().subtract(totalSpent)
                 : null;
@@ -127,11 +135,19 @@ public class ExpenseService
                 .build();
     }
 
-    private BigDecimal getSpendInRange(String userId, LocalDate startDate, LocalDate endDate){
-        Timestamp rangeStart = Timestamp.valueOf(startDate.atStartOfDay());
-        Timestamp rangeEnd = Timestamp.valueOf(endDate.atTime(LocalTime.MAX));
+    private BigDecimal getSpendInRange(SpendingLimit spendingLimit){
+        Timestamp rangeStart = Timestamp.valueOf(spendingLimit.getStartDate().atStartOfDay());
+        // Floor at the last (re)set instant so expenses from earlier the same day,
+        // before a reset, don't get counted against the new budget period.
+        if (spendingLimit.getCreatedAt() != null) {
+            Timestamp resetStamp = Timestamp.from(spendingLimit.getCreatedAt());
+            if (resetStamp.after(rangeStart)) {
+                rangeStart = resetStamp;
+            }
+        }
+        Timestamp rangeEnd = Timestamp.valueOf(spendingLimit.getEndDate().atTime(LocalTime.MAX));
 
-        return expenseRepository.findByUserIdAndCreatedAtBetween(userId, rangeStart, rangeEnd).stream()
+        return expenseRepository.findByUserIdAndCreatedAtBetween(spendingLimit.getUserId(), rangeStart, rangeEnd).stream()
                 .filter(expense -> !"credit".equalsIgnoreCase(expense.getTransactionType()))
                 .map(Expense::getAmount)
                 .filter(Objects::nonNull)

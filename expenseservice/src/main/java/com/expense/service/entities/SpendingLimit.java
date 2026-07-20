@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 
 @Entity
@@ -46,4 +47,9 @@ public class SpendingLimit {
 
     @Column(name = "end_date")
     private LocalDate endDate;
+
+    // Stamped to Instant.now() on every setLimit/reset call (not just first insert) —
+    // acts as the floor for spend counting so expenses from before a reset don't count.
+    @Column(name = "created_at")
+    private Instant createdAt;
 }
