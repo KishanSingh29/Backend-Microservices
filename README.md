@@ -1,247 +1,138 @@
-# 💸 Expense Tracker — Backend Microservices
+# Expense Tracker — Backend Microservices
 
-An AI-powered automatic expense tracking system built with Spring Boot Microservices, Apache Kafka, and Mistral AI.
-
-> Automatically detects payment SMS/notifications, extracts expense data using AI, and saves it in real-time — no manual entry required.
+An AI-powered expense tracking system built on Spring Boot microservices, Apache Kafka, and Mistral AI. It automatically reads incoming bank SMS, extracts the transaction details using an LLM, and records the expense in real time — no manual entry required.
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
-📱 React Native App (Frontend)
-         |
-         ├──── REST ────────────────────────────┐
-         ▼                                      ▼
-+------------------+              +------------------+
-|   AuthService    |──── Kafka ──▶|   UserService    |
-|   Port: 9898     |  user_service|   Port: 9810     |
-|  (JWT + BCrypt)  |    topic     |  (JWT Validated) |
-+------------------+              +------------------+
-                                       MySQL (userservice DB)
-         |
-         | SMS detected by App
-         ▼
-+----------------------+
-|  DataScience Service | ← Flask + Mistral AI
-|     Port: 8000       | ← Parses SMS text
-+----------------------+
-         |
-         | Kafka (expense_service topic)
-         ▼
-+------------------+
-|  ExpenseService  |
-|   Port: 9820     |
-+------------------+
-         |
-         ▼
-   MySQL (expenseservice DB)
-```
+                         React Native App (Frontend)
+                                    |
+                 ┌──────────────────┼───────────────────┐
+                 │ REST + JWT       │                    │ Bank SMS detected
+                 ▼                  ▼                    ▼
+        +---------------+  +---------------+   +----------------------+
+        |  AuthService  |  |  UserService  |   |  DSService (AI/ML)   |
+        |  Port: 9898   |  |  Port: 9810   |   |  Port: 8000          |
+        |  JWT + BCrypt |  |  Profile API  |   |  Flask + Mistral AI  |
+        +-------+-------+  +-------+-------+   +----------+-----------+
+                |                  |                       |
+                |     Kafka        |                       | Kafka
+                └──────Topic───────┘                       | (expense_service)
+                 (user_service)                            ▼
+                                                   +-------------------+
+                                                   |   ExpenseService  |
+                                                   |    Port: 9820     |
+                                                   +---------+---------+
+                                                             |
+                 ┌───────────────────┬───────────────────────┘
+                 ▼                   ▼
+        +----------------+   +--------------------------+
+        |     MySQL      |   |    Apache Kafka + ZK      |
+        | (1 DB/service) |   |   (event-driven backbone) |
+        +----------------+   +--------------------------+
 
----
-
-## 🚀 Features
-
-- ✅ JWT Authentication with Access + Refresh Token rotation
-- ✅ Real-time SMS detection using native Android module
-- ✅ AI-powered expense parsing using **Mistral AI + LangChain**
-- ✅ Async event-driven architecture using **Apache Kafka**
-- ✅ Separate MySQL database per microservice
-- ✅ User profile management with JWT-secured APIs
-- ✅ Manual + automatic expense tracking
-- ✅ React Native mobile app (Expo Dev Build)
-
----
-
-## 🛠️ Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Backend | Spring Boot 3, Java 21 |
-| Messaging | Apache Kafka |
-| AI/ML | Mistral AI, LangChain, Flask (Python) |
-| Database | MySQL (separate DB per service) |
-| Auth | JWT (Access + Refresh Token), Spring Security, BCrypt |
-| Frontend | React Native (Expo) |
-| SMS Detection | @maniac-tech/react-native-expo-read-sms |
-| Containerization | Docker |
-
----
-
-## 📦 Microservices
-
-### 1. AuthService (Port: 9898)
-Handles user registration and authentication. Publishes user events to Kafka.
-
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| POST | `/auth/v1/signup` | Public | Register new user |
-| POST | `/auth/v1/login` | Public | Login and get tokens |
-| POST | `/auth/v1/refreshToken` | Public | Refresh access token |
-| GET | `/auth/v1/ping` | JWT | Auth check |
-| GET | `/health` | Public | Health check |
-
-**On Signup:** Publishes `UserInfoEvent` to Kafka topic `user_service`
-
----
-
-### 2. UserService (Port: 9810)
-Manages user profile data. Consumes user events from Kafka. JWT validation on all endpoints.
-
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| GET | `/user/v1/me?userId=` | JWT | Get user profile |
-| PUT | `/user/v1/update?userId=` | JWT | Update profile |
-| GET | `/health` | Public | Health check |
-
-**Kafka Consumer:** Listens to `user_service` topic → saves user profile to MySQL
-
----
-
-### 3. DataScience Service (Port: 8000)
-Flask service that uses Mistral AI + LangChain to parse payment SMS text.
-
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| POST | `/v1/ds/message` | x-user-id header | Parse SMS and extract expense |
-| GET | `/health` | Public | Health check |
-
-**Request Body:**
-```json
-{
-  "message": "Spent INR 350 at Zomato using HDFC card"
-}
-```
-
-**Response:**
-```json
-{
-  "amount": "350",
-  "merchant": "Zomato",
-  "currency": "INR"
-}
-```
-
-**SMS Filter:** Only processes SMS containing keywords: `spent`, `bank`, `card`
-
-**On Success:** Publishes parsed data to Kafka topic `expense_service`
-
----
-
-### 4. ExpenseService (Port: 9820)
-Stores and manages expense records. Acts as both Kafka consumer and REST API provider.
-
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| GET | `/expense/v1/getExpense` | X-User-Id header | Get all user expenses |
-| POST | `/expense/v1/addExpense` | X-User-Id header | Manually add expense |
-| GET | `/health` | Public | Health check |
-
-**Kafka Consumer:** Listens to `expense_service` topic → saves expense to MySQL
-
----
-
-## 🔄 How It Works
-
-### Auto Flow (SMS Detection):
-```
-1. User receives payment SMS on phone
-2. React Native app detects SMS in background (Android native module)
-3. SMS filtered — contains "spent/bank/card" keywords?
-4. POST /v1/ds/message → DataScience Service
-5. Mistral AI extracts: amount, merchant, currency
-6. Publishes to Kafka topic: expense_service
-7. ExpenseService consumes → saves to MySQL
-8. Home screen auto-refreshes with new expense
-```
-
-### Manual Flow:
-```
-1. User taps "+" button in app
-2. POST /expense/v1/addExpense with X-User-Id header
-3. ExpenseService saves to MySQL
-4. UI updates
-```
-
-### Auth Flow:
-```
-1. POST /auth/v1/signup → JWT tokens + userId returned
-2. AuthService publishes to Kafka → UserService saves profile
-3. Tokens stored in AsyncStorage
-4. All secured APIs use Bearer token or X-User-Id header
-5. Token expired → POST /auth/v1/refreshToken → new access token
+                    All services containerized & orchestrated via Docker Compose
 ```
 
 ---
 
-## ⚙️ Local Setup
+## Tech Stack
 
-### Prerequisites
-- Java 21
-- Python 3.9+
-- Docker Desktop
-- MySQL 8.0
-- Node.js 18+
+| Layer            | Technology                                              |
+|-------------------|----------------------------------------------------------|
+| Backend            | Java 21, Spring Boot 3, Spring Security                 |
+| AI / ML             | Python, Flask, Mistral AI, LangChain                     |
+| Messaging           | Apache Kafka + Zookeeper                                 |
+| Database            | MySQL 8.0 (separate schema per service)                  |
+| Auth                | JWT (Access + Refresh Token), BCrypt                     |
+| Frontend            | React Native (Expo)                                      |
+| SMS Detection       | @maniac-tech/react-native-expo-read-sms                  |
+| Containerization    | Docker, Docker Compose                                   |
 
-### Step 1 — Start Kafka (Docker)
+---
+
+## How to Run
+
+All services, Kafka, Zookeeper and MySQL are wired together in `docker-compose.yml`.
+
 ```bash
+git clone https://github.com/KishanSingh29/Expence.git
+cd Expence
+
+# add your Mistral API key
+echo "OPENAI_API_KEY=your_mistral_api_key" >> dsservice/.env
+
 docker-compose up -d
 ```
 
-### Step 2 — Configure MySQL
-```sql
-CREATE DATABASE authservice;
-CREATE DATABASE userservice;
-CREATE DATABASE expenseservice;
-```
+| Service        | URL                          |
+|-----------------|-------------------------------|
+| AuthService      | http://localhost:9898         |
+| UserService      | http://localhost:9810         |
+| ExpenseService   | http://localhost:9820         |
+| DSService (AI)   | http://localhost:8000         |
+| Kafka            | localhost:29092                |
+| MySQL            | localhost:3306                 |
 
-### Step 3 — Configure application.properties
-In each Spring Boot service:
-```properties
-spring.datasource.username=YOUR_USERNAME
-spring.datasource.password=YOUR_PASSWORD
-```
-
-In `dsservice/.env`:
-```
-OPENAI_API_KEY=your_mistral_api_key
-KAFKA_HOST=localhost
-KAFKA_PORT=9092
-```
-
-### Step 4 — Start Services (in order)
-```bash
-# 1. AuthService (Port 9898)
-cd authservice && ./mvnw spring-boot:run
-
-# 2. UserService (Port 9810)
-cd userservice && ./mvnw spring-boot:run
-
-# 3. ExpenseService (Port 9820)
-cd expenseservice && ./mvnw spring-boot:run
-
-# 4. DataScience Service (Port 8000)
-cd dsservice
-python -m venv dsenv
-dsenv\Scripts\activate
-pip install flask langchain langchain-mistralai kafka-python python-dotenv
-cd src && python -m app
-```
-
-### Step 5 — Run Frontend
-```bash
-cd expense-tracker-app
-npm install
-npx expo start
-```
+Data persists across restarts via a named `mysql_data` Docker volume — `docker-compose down` does not wipe the database.
 
 ---
 
-## 📱 Frontend Repository
+## API Endpoints
+
+### AuthService (9898)
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/auth/v1/signup` | Register a new user, returns JWT tokens |
+| POST | `/auth/v1/login` | Authenticate and get access + refresh token |
+| POST | `/auth/v1/refreshToken` | Get a new access token |
+| GET | `/auth/v1/ping` | Validate current session |
+
+### UserService (9810)
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/user/v1/me?userId=` | Get user profile |
+| PUT | `/user/v1/update?userId=` | Update user profile |
+
+### DSService — AI/ML (8000)
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/v1/ds/message` | Parses a bank SMS and extracts amount, merchant, transaction type |
+
+### ExpenseService (9820)
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/expense/v1/getExpense` | Get all expenses for a user |
+| POST | `/expense/v1/addExpense` | Add an expense (manual or AI-parsed) |
+| GET | `/expense/v1/summary?days=` | Category-wise spending summary |
+| POST | `/expense/v1/setLimit` | Set a monthly spending limit |
+| GET | `/expense/v1/getLimit` | Get current spending limit status |
+
+Every service also exposes `GET /health` for container health checks.
+
+---
+
+## Features
+
+- Automatic expense detection from bank SMS using an LLM (Mistral AI + LangChain)
+- Regex + keyword-based SMS pre-filtering before invoking the AI, to reduce cost and false positives
+- JWT authentication with access + refresh token rotation
+- Event-driven architecture using Apache Kafka (SMS parsing → expense creation pipeline)
+- Manual expense entry alongside automatic detection
+- Category-wise spending summaries and monthly spending limits with alerts
+- Isolated MySQL database per microservice
+- Fully containerized with Docker Compose, with persistent MySQL storage
+- Cross-platform mobile client built with React Native (Expo)
+
+---
+
+## Frontend Repository
 [Expense Tracker App](https://github.com/KishanSingh29/expense-tracker-app)
 
 ---
 
-## 👨‍💻 Author
-**Kishan Singh** — 3rd Year CS Student  
+## Author
+**Kishan Singh**
 [GitHub](https://github.com/KishanSingh29)
