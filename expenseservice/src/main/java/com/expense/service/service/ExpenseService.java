@@ -279,7 +279,7 @@ public class ExpenseService
         if (containsAny(name, "uber", "ola", "irctc", "flight", "airlines", "indigo", "redbus", "travel", "metro", "fuel", "petrol")) {
             return "Travel";
         }
-        if (containsAny(name, "electricity", "recharge", "bill", "dth", "broadband", "gas", "water", "jio", "airtel")) {
+        if (containsAny(name, "electricity", "recharge", "bill", "dth", "broadband", "gas", "water", "jio", "Airtel")) {
             return "Bills";
         }
         if (containsAny(name, "netflix", "hotstar", "prime", "spotify", "bookmyshow", "movie", "cinema")) {

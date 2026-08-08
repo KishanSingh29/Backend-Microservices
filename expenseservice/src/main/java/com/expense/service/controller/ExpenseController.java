@@ -9,7 +9,7 @@ import com.expense.service.service.ExpenseService;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity; // ✅ sirf yeh import rakho
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,7 +30,7 @@ public class ExpenseController {
             @RequestHeader(value = "X-User-Id") @NonNull String userId) {
         try {
             List<ExpenseDto> expenseDtoList = expenseService.getExpenses(userId);
-            return ResponseEntity.ok(expenseDtoList); // ✅ clean way
+            return ResponseEntity.ok(expenseDtoList);
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }

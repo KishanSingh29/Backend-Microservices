@@ -3,7 +3,7 @@ package com.expense.service.dto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies; // ✅ yeh use karo
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.*;
 
@@ -16,7 +16,7 @@ import java.sql.Timestamp;
 @Getter
 @Setter
 @ToString
-@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class) // ✅ SnakeCaseStrategy
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ExpenseDto {
 
@@ -33,11 +33,11 @@ public class ExpenseDto {
     private String transactionType;
     private Timestamp createdAt;
 
-    // ✅ Constructor mein bhi fix karo
+
     public ExpenseDto(String json) {
         try {
             ObjectMapper mapper = new ObjectMapper();
-            mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE); // ✅
+            mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
             ExpenseDto expense = mapper.readValue(json, ExpenseDto.class);
             this.externalId = expense.externalId;
             this.amount = expense.amount;
