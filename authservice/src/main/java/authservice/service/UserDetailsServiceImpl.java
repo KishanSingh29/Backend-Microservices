@@ -67,7 +67,12 @@ public class UserDetailsServiceImpl implements UserDetailsService
         UserInfo userInfo = new UserInfo(userId, userInfoDto.getUsername(), userInfoDto.getPassword(), new HashSet<>());
         userRepository.save(userInfo);
         // pushEventToQueue
-        userInfoProducer.sendEventToKafka(userInfoEventToPublish(userInfoDto, userId));
+        try {
+            userInfoProducer.sendEventToKafka(userInfoEventToPublish(userInfoDto, userId));
+            System.out.println("Kafka published for user: " + userId);
+        } catch (Exception e) {
+            System.out.println("Kafka publish failed: " + e.getMessage());
+        }
         return userId;
     }
 
@@ -78,7 +83,7 @@ public class UserDetailsServiceImpl implements UserDetailsService
     private UserInfoEvent userInfoEventToPublish(UserInfoDto userInfoDto, String userId){
         return UserInfoEvent.builder()
                 .userId(userId)
-                .firstName(userInfoDto.getUsername())
+                .firstName(userInfoDto.getFirstName())
                 .lastName(userInfoDto.getLastName())
                 .email(userInfoDto.getEmail())
                 .phoneNumber(userInfoDto.getPhoneNumber()).build();
