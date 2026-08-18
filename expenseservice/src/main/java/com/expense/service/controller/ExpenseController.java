@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,6 +74,7 @@ public class ExpenseController {
                   "remainingLimit": 4500
                 }
               """)))
+    @SecurityRequirement(name = "Bearer Auth")
     @PostMapping("/addExpense")
     public ResponseEntity<AddExpenseResponse> addExpenses(
             @RequestHeader(value = "X-User-Id") @NonNull String userId,
@@ -115,6 +117,7 @@ public class ExpenseController {
                   "daysLeft": 30
                 }
               """)))
+    @SecurityRequirement(name = "Bearer Auth")
     @PostMapping("/setLimit")
     public ResponseEntity<SpendingLimitStatusDto> setLimit(
             @RequestHeader(value = "X-User-Id") @NonNull String userId,
@@ -145,6 +148,7 @@ public class ExpenseController {
                   "daysLeft": 28
                 }
               """)))
+    @SecurityRequirement(name = "Bearer Auth")
     @GetMapping("/getLimit")
     public ResponseEntity<SpendingLimitStatusDto> getLimit(
             @RequestHeader(value = "X-User-Id") @NonNull String userId) {
@@ -189,6 +193,7 @@ public class ExpenseController {
                   ]
                 }
               """)))
+    @SecurityRequirement(name = "Bearer Auth")
     @GetMapping("/summary")
     public ResponseEntity<ExpenseSummaryDto> getSummary(
             @RequestHeader(value = "X-User-Id") @NonNull String userId,

@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +50,7 @@ public class UserController
                   "phoneNumber": 9876543210
                 }
               """)))
+    @SecurityRequirement(name = "Bearer Auth")
     @GetMapping("/user/v1/me")
     public ResponseEntity<UserInfoDto> getMe(@RequestParam String userId) {
         try {
@@ -81,6 +83,7 @@ public class UserController
                   "phoneNumber": 9876543210
                 }
               """)))
+    @SecurityRequirement(name = "Bearer Auth")
     @PutMapping("/user/v1/update")
     public ResponseEntity<UserInfoDto> updateUser(
             @RequestParam String userId,
