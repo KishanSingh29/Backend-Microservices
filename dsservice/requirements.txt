@@ -1,5 +1,6 @@
 flask
 flask-cors
+flasgger
 langchain
 langchain-mistralai
 langchain-openai

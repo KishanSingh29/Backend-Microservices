@@ -6,6 +6,11 @@ import authservice.response.JwtResponseDTO;
 import authservice.service.JwtService;
 import authservice.service.RefreshTokenService;
 import authservice.service.UserDetailsServiceImpl;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Objects;
 
+@Tag(name = "Authentication", description = "Signup, Login, Token refresh")
 @AllArgsConstructor
 @RestController
 public class AuthController
@@ -33,6 +39,27 @@ public class AuthController
     @Autowired
     private UserDetailsServiceImpl userDetailsService;
 
+    @Operation(summary = "Register New User",
+            description = "Creates new user account. Publishes to Kafka topic 'user_service' → UserService saves profile automatically.")
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            content = @Content(schema = @Schema(example = """
+                {
+                  "firstName": "Kishan",
+                  "lastName": "Singh",
+                  "username": "kishan123",
+                  "email": "kishan@gmail.com",
+                  "password": "password123",
+                  "phoneNumber": 9876543210
+                }
+              """)))
+    @ApiResponse(responseCode = "200", description = "Signup successful",
+            content = @Content(schema = @Schema(example = """
+                {
+                  "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
+                  "token": "refresh-token-uuid",
+                  "userId": "f72b9ce8-d7a4-4ca6-b4d7-5eae1cf197ac"
+                }
+              """)))
     @PostMapping("auth/v1/signup")
     public ResponseEntity SignUp(@RequestBody UserInfoDto userInfoDto){
         try{

@@ -103,6 +103,7 @@ import json
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from flasgger import Swagger
 from kafka import KafkaProducer
 from dotenv import load_dotenv
 from langchain_core.prompts import ChatPromptTemplate
@@ -115,6 +116,20 @@ app = Flask(__name__)
 app.config.from_pyfile('config.py')
 
 CORS(app, origins=["http://localhost:8080", "http://localhost:5173", "http://localhost:3000"])
+
+swagger = Swagger(app)
+
+@app.after_request
+def after_request(response):
+    response.headers.add(
+        'Access-Control-Allow-Origin', '*')
+    response.headers.add(
+        'Access-Control-Allow-Headers',
+        'Content-Type,Authorization,x-user-id')
+    response.headers.add(
+        'Access-Control-Allow-Methods',
+        'GET,PUT,POST,DELETE,OPTIONS')
+    return response
 
 # ===============================
 # Kafka Config (optional)
@@ -269,6 +284,36 @@ def process_bank_sms(message):
 # ===============================
 @app.route('/v1/ds/message', methods=['POST', 'OPTIONS'])
 def handle_message():
+    """
+    Parse Bank SMS
+    ---
+    tags:
+      - AI SMS Parser
+    consumes:
+      - application/json
+    produces:
+      - application/json
+    parameters:
+      - in: header
+        name: x-user-id
+        type: string
+        required: true
+      - in: body
+        name: body
+        schema:
+          id: SmsRequest
+          required:
+            - message
+          properties:
+            message:
+              type: string
+              example: "Rs.500 Dr. from A/C XXXXXX5249 and Cr. to zomato@upi. Ref:123456. AvlBal:Rs5000"
+    responses:
+      200:
+        description: Parsed successfully
+      400:
+        description: Not a bank SMS
+    """
     if request.method == 'OPTIONS':
         return '', 204
 
