@@ -1,0 +1,30 @@
+name: Deploy to GCP
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USERNAME }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            cd ~/Backend-Microservices
+            git pull origin main
+            docker compose down
+            docker compose up -d --build
+            sleep 60
+            echo "=== Health Check ==="
+            curl -s -o /dev/null -w "Auth: %{http_code}\n" http://localhost:9898/health
+            curl -s -o /dev/null -w "User: %{http_code}\n" http://localhost:9810/health
+            curl -s -o /dev/null -w "Expense: %{http_code}\n" http://localhost:9820/health
+            curl -s -o /dev/null -w "DS: %{http_code}\n" http://localhost:8000/apidocs/
+            echo "=== Deploy Done ==="
